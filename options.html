@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPOE Trade Manager - Options</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #2a2a2a;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      color: #af6025;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #999;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid #3a3a3a;
+    }
+
+    .section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    h2 {
+      color: #d0d0d0;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+
+    .setting {
+      margin-bottom: 20px;
+    }
+
+    .setting:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: flex;
+      align-items: flex-start;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 12px;
+      margin-top: 3px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #af6025;
+    }
+
+    .setting-label {
+      flex: 1;
+    }
+
+    .setting-title {
+      font-weight: 500;
+      color: #e0e0e0;
+      margin-bottom: 4px;
+    }
+
+    .setting-description {
+      font-size: 13px;
+      color: #999;
+      line-height: 1.4;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #af6025;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 12px;
+      background: #2a5a2a;
+      border-radius: 4px;
+      color: #90ee90;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .status.show {
+      opacity: 1;
+    }
+
+    .info-box {
+      background: #2a3a4a;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 3px solid #4a90e2;
+      margin-top: 15px;
+    }
+
+    .info-box p {
+      font-size: 13px;
+      color: #b0c4de;
+      margin: 0;
+    }
+
+    .button {
+      background: #af6025;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .button:hover {
+      background: #8f4d1f;
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>UPOE Trade Manager</h1>
+    <p class="subtitle">Configure your trade search extension</p>
+
+    <div class="section">
+      <h2>Search Features</h2>
+      
+      <div class="setting">
+        <label>
+          <input type="checkbox" id="fuzzySearchEnabled">
+          <div class="setting-label">
+            <div class="setting-title">Enable Fuzzy Search</div>
+            <div class="setting-description">
+              Automatically adds "~" to the beginning of search inputs for fuzzy matching.
+              Start with a space to opt-out for specific searches.
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div class="info-box">
+        <p>
+          Fuzzy search helps find items with similar names even if you don't type the exact name.
+          For example, searching for "resistance" will also find "resistances" and "resistant".
+        </p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Default Settings</h2>
+      
+      <div class="setting">
+        <div class="setting-label">
+          <div class="setting-title">Default Category</div>
+          <div class="setting-description" style="margin-bottom: 10px;">
+            New searches saved from the content page will use this category by default.
+          </div>
+          <select id="defaultCategory">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>About</h2>
+      <p style="color: #999; font-size: 14px;">
+        UPOE Trade Manager helps you organize and quickly access your Path of Exile trade searches.
+        <br><br>
+        Version: 1.0.0
+      </p>
+    </div>
+
+    <div id="status" class="status">Settings saved!</div>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

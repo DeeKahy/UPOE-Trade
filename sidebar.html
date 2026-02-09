@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POE Trade Searches</title>
+  <link rel="stylesheet" href="styles/sidebar.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Trade Searches</h1>
+      <button id="saveCurrentBtn" class="btn btn-primary" title="Save current trade search">
+        Save Current
+      </button>
+    </header>
+
+    <div class="toolbar">
+      <button id="newCategoryBtn" class="btn btn-small">
+        New Category
+      </button>
+      <button id="exportBtn" class="btn btn-small">
+        Export
+      </button>
+      <button id="importBtn" class="btn btn-small">
+        Import
+      </button>
+      <button id="settingsBtn" class="btn btn-small" title="Open settings">
+        Settings
+      </button>
+    </div>
+
+    <div class="quick-links" id="quickLinks">
+      <button id="quickLinksToggle" class="quick-links-header" type="button" aria-expanded="true">
+        <span>Quick Links</span>
+        <span class="quick-links-arrow">v</span>
+      </button>
+      <div class="quick-links-grid" id="quickLinksGrid">
+        <a href="https://poe.ninja" target="_blank" class="quick-link" title="POE Ninja - Economy & Prices">
+          <span class="link-text">POE Ninja</span>
+        </a>
+        <a href="https://poegem.smallapp.cc" target="_blank" class="quick-link" title="POE Gem - Skill Gem Info">
+          <span class="link-text">POE Gem</span>
+        </a>
+        <a href="https://www.craftofexile.com" target="_blank" class="quick-link" title="Craft of Exile - Crafting Simulator">
+          <span class="link-text">Craft of Exile</span>
+        </a>
+        <a href="https://siveran.github.io/calc.html" target="_blank" class="quick-link" title="Build Calculator">
+          <span class="link-text">Color Calc</span>
+        </a>
+      </div>
+    </div>
+
+    <div id="searchBar" class="search-bar">
+      <input type="text" id="filterInput" placeholder="Filter searches...">
+    </div>
+
+    <div id="categoriesContainer" class="categories-container">
+      <!-- Categories and searches will be rendered here -->
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <p>No saved searches yet</p>
+      <p class="hint">Visit pathofexile.com/trade and click "Save Current" to add your first search</p>
+    </div>
+  </div>
+
+  <!-- Modal for saving search -->
+  <div id="saveModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h2>Save Trade Search</h2>
+      <form id="saveForm">
+        <div class="form-group">
+          <label for="searchName">Search Name</label>
+          <input type="text" id="searchName" required placeholder="e.g., Life/Res Rings">
+        </div>
+        <div class="form-group">
+          <label for="searchCategory">Category</label>
+          <select id="searchCategory" required>
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="cancelSaveBtn" class="btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal for new category -->
+  <div id="categoryModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h2>New Category</h2>
+      <form id="categoryForm">
+        <div class="form-group">
+          <label for="categoryName">Category Name</label>
+          <input type="text" id="categoryName" required placeholder="e.g., Current Build">
+        </div>
+        <div class="form-actions">
+          <button type="button" id="cancelCategoryBtn" class="btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal for editing -->
+  <div id="editModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h2>Edit Search</h2>
+      <form id="editForm">
+        <input type="hidden" id="editSearchId">
+        <div class="form-group">
+          <label for="editSearchName">Search Name</label>
+          <input type="text" id="editSearchName" required>
+        </div>
+        <div class="form-group">
+          <label for="editSearchCategory">Category</label>
+          <select id="editSearchCategory" required>
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="cancelEditBtn" class="btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal for confirmation -->
+  <div id="confirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h2 id="confirmTitle">Confirm</h2>
+      <p id="confirmMessage"></p>
+      <div class="form-actions">
+        <button type="button" id="cancelConfirmBtn" class="btn">Cancel</button>
+        <button type="button" id="okConfirmBtn" class="btn btn-primary">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="sidebar.js"></script>
+</body>
+</html>
