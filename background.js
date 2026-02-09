@@ -25,12 +25,4 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
-// Handle browser action click (though we mainly use sidebar)
-browser.browserAction?.onClicked.addListener(() => {
-  // Open sidebar
-  browser.sidebarAction.open().catch(err => {
-    console.error('UPOE Trade Manager: Failed to open sidebar:', err);
-  });
-});
-
 console.log('UPOE Trade Manager: Ready');

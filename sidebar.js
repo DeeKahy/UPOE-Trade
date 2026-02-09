@@ -181,13 +181,13 @@ class SidebarUI {
     console.log('UPOE Sidebar: Rendering. Categories:', this.categories.length, 'Searches:', this.searches.length);
 
     if (this.searches.length === 0) {
-      container.innerHTML = '';
+      container.replaceChildren();
       emptyState.style.display = 'block';
       return;
     }
 
     emptyState.style.display = 'none';
-    container.innerHTML = '';
+    container.replaceChildren();
 
     // Render categories and their searches
     this.categories.forEach(category => {
