@@ -2,6 +2,8 @@
 
 A Firefox extension that helps you save, organize, and quickly access your Path of Exile trade searches with categories and optional fuzzy search enhancement.
 
+🦊 **[Install Stable (AMO)](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/)** | 🧪 **[Download Beta](https://lennartdiegokahn.github.io/UPOE-Trade/)** | 📦 **[All Releases](https://github.com/lennartdiegokahn/UPOE-Trade/releases)**
+
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Firefox](https://img.shields.io/badge/firefox-109%2B-orange)
 
@@ -56,8 +58,11 @@ A Firefox extension that helps you save, organize, and quickly access your Path 
    - Go to View → Sidebar → POE Trade Searches
    - Or press the keyboard shortcut if configured
 
-### From Firefox Add-ons (Coming Soon)
-The extension will be available on the Firefox Add-ons store once it's published.
+### Stable (Recommended)
+Install from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/) for automatic updates through Mozilla.
+
+### Beta Testing
+Download the latest beta from the [project website](https://lennartdiegokahn.github.io/UPOE-Trade/) to test new features. Beta builds auto-update to new betas.
 
 ## Usage
 
@@ -185,6 +190,67 @@ UPOE-Trade/
 }
 ```
 
+## Releasing New Versions
+
+This extension uses two release channels: **Beta** (for testing) and **Stable** (for AMO).
+
+### Release Channels
+
+| Channel | Tag Format | Where it Goes | Auto-Updates |
+|---------|-----------|---------------|--------------|
+| **Beta** | `v1.0.1-beta.1` | GitHub only | Via `beta-updates.json` |
+| **Stable** | `v1.0.1` | AMO + GitHub | Mozilla (AMO users) |
+
+### Quick Reference
+
+```bash
+# Release a beta (GitHub only, instant)
+git tag v1.0.1-beta.1
+git push origin v1.0.1-beta.1
+
+# Release stable (submits to AMO for review)
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+### How It Works
+
+**Beta releases** (`v1.0.1-beta.1`, `v1.0.1-rc.1`, etc.):
+- Signed and uploaded to GitHub releases (marked as pre-release)
+- Updates `beta-updates.json` for auto-updates
+- Available immediately on the [project website](https://lennartdiegokahn.github.io/UPOE-Trade/)
+- Beta users who install from GitHub get these updates automatically
+
+**Stable releases** (`v1.0.1`):
+- Submitted to AMO for Mozilla review
+- Also uploaded to GitHub releases
+- Updates `updates.json` (for anyone using stable self-hosted)
+- AMO users get updates automatically after Mozilla approves
+
+### Manual Trigger
+
+1. Go to Actions → Release Firefox Extension
+2. Click "Run workflow"
+3. Enter version (e.g., `1.0.1-beta.2` or `1.0.1`)
+4. Choose channel: `auto` (recommended), `beta`, or `stable`
+5. Click "Run workflow"
+
+### Setting Up AMO API Keys
+
+1. Create an API key at https://addons.mozilla.org/developers/addon/api/key/
+2. Add these secrets to your repository (Settings → Secrets → Actions):
+   - `AMO_JWT_ISSUER`: Your API key (JWT issuer)
+   - `AMO_JWT_SECRET`: Your API secret
+
+### Enabling GitHub Pages
+
+1. Go to Settings → Pages
+2. Set Source to "Deploy from a branch"
+3. Select `main` branch and `/docs` folder
+4. Save
+
+Your beta download site will be at `https://yourusername.github.io/UPOE-Trade/`
+
 ## Troubleshooting
 
 ### Save button doesn't appear
@@ -210,6 +276,10 @@ UPOE-Trade/
 ## Roadmap
 
 Future features under consideration:
+- [x] Automatic Firefox updates via GitHub releases
+- [x] GitHub Pages project website
+- [x] Dual-channel releases (AMO + self-hosted)
+- [x] Beta/Stable release separation
 - [ ] Keyboard shortcuts for common actions
 - [ ] Search notes and tags
 - [ ] Pin favorite searches to top

@@ -135,9 +135,8 @@ header h1 {
 }
 
 .quick-links-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .quick-link {
@@ -154,6 +153,24 @@ header h1 {
   font-weight: 500;
   transition: all 0.2s;
   cursor: pointer;
+  flex-basis: 50%;
+}
+
+
+#tradeLink{
+  flex-basis: 100%;
+}
+#tradeLink a{
+  color: white;
+  text-decoration: none;
+  text-align: center;
+  width: 100%;
+  display: inline-block;
+  margin:5px 0;
+}
+#TradeLink a:visited{
+  color: white;
+
 }
 
 .quick-link:hover {
