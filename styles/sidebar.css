@@ -156,20 +156,8 @@ header h1 {
   flex-basis: 50%;
 }
 
-
-#tradeLink{
+#tradeLink {
   flex-basis: 100%;
-}
-#tradeLink a{
-  color: white;
-  text-decoration: none;
-  text-align: center;
-  width: 100%;
-  display: inline-block;
-  margin:5px 0;
-}
-#tradeLink a:visited{
-  color: white;
 }
 
 .quick-link:hover {
