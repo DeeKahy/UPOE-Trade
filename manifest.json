@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UPOE Trade Manager",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.2",
   "description": "Save and organize Path of Exile trade searches with categories and quick access",
   "icons": {
     "48": "icons/icon-48.svg",
@@ -17,14 +17,24 @@
   ],
   "content_scripts": [
     {
-      "matches": ["*://www.pathofexile.com/trade/*"],
-      "js": ["storage.js", "content-script.js"],
-      "css": ["styles/content.css"],
+      "matches": [
+        "*://www.pathofexile.com/trade/*"
+      ],
+      "js": [
+        "storage.js",
+        "content-script.js"
+      ],
+      "css": [
+        "styles/content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
   "background": {
-    "scripts": ["storage.js", "background.js"]
+    "scripts": [
+      "storage.js",
+      "background.js"
+    ]
   },
   "sidebar_action": {
     "default_title": "POE Trade Searches",
@@ -44,7 +54,9 @@
       "strict_min_version": "140.0",
       "update_url": "https://raw.githubusercontent.com/DeeKahy/UPOE-Trade/main/beta-updates.json",
       "data_collection_permissions": {
-        "required": ["websiteActivity"],
+        "required": [
+          "websiteActivity"
+        ],
         "optional": []
       }
     },
