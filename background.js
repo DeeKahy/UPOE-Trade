@@ -25,4 +25,26 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
+// Handle specific requests from the sidebar
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.url && request.body) {
+        fetch(request.url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: request.body
+        })
+        .then(response => response.json())
+        .then(data => {
+            sendResponse({ success: true, data: data });
+        })
+        .catch(error => {
+            sendResponse({ success: false, error: error.message });
+        });
+        
+        return true; // Keep the message channel open for async response
+    }
+});
+
 console.log('UPOE Trade Manager: Ready');

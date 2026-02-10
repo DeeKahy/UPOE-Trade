@@ -10,21 +10,35 @@
   },
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "webRequest",
+    "*://www.pathofexile.com/*"
   ],
   "host_permissions": [
     "*://www.pathofexile.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["*://www.pathofexile.com/trade/*"],
-      "js": ["storage.js", "content-script.js"],
-      "css": ["styles/content.css"],
+      "matches": [
+        "*://www.pathofexile.com/trade/*",
+        "*://poe.ninja/*"
+      ],
+      "js": [
+        "storage.js",
+        "content-script.js",
+        "POENinjaLookup.js"
+      ],
+      "css": [
+        "styles/content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
   "background": {
-    "scripts": ["storage.js", "background.js"]
+    "scripts": [
+      "storage.js",
+      "background.js"
+    ]
   },
   "sidebar_action": {
     "default_title": "POE Trade Searches",
@@ -43,7 +57,9 @@
       "id": "upoe-trade@example.com",
       "strict_min_version": "140.0",
       "data_collection_permissions": {
-        "required": ["websiteActivity"],
+        "required": [
+          "websiteActivity"
+        ],
         "optional": []
       }
     },
