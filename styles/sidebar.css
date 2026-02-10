@@ -168,9 +168,8 @@ header h1 {
   display: inline-block;
   margin:5px 0;
 }
-#TradeLink a:visited{
+#tradeLink a:visited{
   color: white;
-
 }
 
 .quick-link:hover {
