@@ -1,5 +1,5 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "UPOE Trade Manager",
   "version": "1.0.0-beta.2",
   "description": "Save and organize Path of Exile trade searches with categories and quick access",
@@ -10,9 +10,7 @@
   },
   "permissions": [
     "storage",
-    "activeTab"
-  ],
-  "host_permissions": [
+    "activeTab",
     "*://www.pathofexile.com/*"
   ],
   "content_scripts": [
