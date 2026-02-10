@@ -6,7 +6,7 @@ module.exports = {
     '.git/',
     '.gitignore',
     'README.md',
-    '.web-ext-config.js'
+    '.web-ext-config.cjs'
   ],
   build: {
     overwriteDest: true
