@@ -1,0 +1,320 @@
+# Firefox Extension Release Workflow
+#
+# Release Channels:
+# - BETA: Tags like v1.0.1-beta.1, v1.0.1-rc.1 → GitHub releases only (self-hosted updates)
+# - STABLE: Tags like v1.0.1 → Submits to AMO + GitHub release
+#
+# Prerequisites:
+# 1. Create an API key at https://addons.mozilla.org/developers/addon/api/key/
+# 2. Add secrets: AMO_JWT_ISSUER and AMO_JWT_SECRET
+#
+# Usage:
+# - Beta:   git tag v1.0.1-beta.1 && git push origin v1.0.1-beta.1
+# - Stable: git tag v1.0.1 && git push origin v1.0.1
+# - Manual: Actions tab → Run workflow
+
+name: Release Firefox Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g., 1.0.1 or 1.0.1-beta.1)'
+        required: true
+        type: string
+      channel:
+        description: 'Release channel (auto-detected from version if not specified)'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - beta
+          - stable
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install web-ext
+        run: npm install -g web-ext
+
+      - name: Determine version and channel
+        id: config
+        run: |
+          # Get version from input or tag
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION=$(jq -r '.version' manifest.json)
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Determine channel: beta if version contains -, stable otherwise
+          CHANNEL="${{ github.event.inputs.channel }}"
+          if [ "$CHANNEL" == "auto" ] || [ -z "$CHANNEL" ]; then
+            if [[ "$VERSION" == *"-"* ]]; then
+              CHANNEL="beta"
+            else
+              CHANNEL="stable"
+            fi
+          fi
+          echo "channel=$CHANNEL" >> $GITHUB_OUTPUT
+          
+          # Set prerelease flag for GitHub release
+          if [ "$CHANNEL" == "beta" ]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "========================================"
+          echo "Version: $VERSION"
+          echo "Channel: $CHANNEL"
+          echo "Prerelease: $([ "$CHANNEL" == "beta" ] && echo "yes" || echo "no")"
+          echo "========================================"
+
+      - name: Update manifest.json version
+        run: |
+          jq --arg version "${{ steps.config.outputs.version }}" '.version = $version' manifest.json > manifest.tmp.json
+          mv manifest.tmp.json manifest.json
+
+      - name: Build extension
+        run: |
+          web-ext build --overwrite-dest
+          ls -la web-ext-artifacts/
+
+      # ============================================
+      # BETA CHANNEL - Sign for self-hosting only
+      # ============================================
+      - name: Sign for beta (unlisted)
+        id: sign-beta
+        if: steps.config.outputs.channel == 'beta' && env.AMO_JWT_ISSUER != ''
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          echo "🧪 Signing for BETA (unlisted/self-hosted)..."
+          
+          mkdir -p web-ext-artifacts/signed
+          
+          web-ext sign \
+            --channel=unlisted \
+            --api-key="$AMO_JWT_ISSUER" \
+            --api-secret="$AMO_JWT_SECRET" \
+            --artifacts-dir=web-ext-artifacts/signed
+          
+          XPI_FILE=$(find web-ext-artifacts/signed -name "*.xpi" | head -1)
+          if [ -n "$XPI_FILE" ]; then
+            echo "✅ Beta XPI signed: $XPI_FILE"
+            echo "xpi_path=$XPI_FILE" >> $GITHUB_OUTPUT
+            echo "xpi_name=$(basename $XPI_FILE)" >> $GITHUB_OUTPUT
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ No signed XPI found"
+            echo "success=false" >> $GITHUB_OUTPUT
+          fi
+
+      # ============================================
+      # STABLE CHANNEL - Sign and submit to AMO
+      # ============================================
+      - name: Sign for stable (unlisted for GitHub)
+        id: sign-stable-unlisted
+        if: steps.config.outputs.channel == 'stable' && env.AMO_JWT_ISSUER != ''
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          echo "📦 Signing stable release for GitHub (unlisted)..."
+          
+          mkdir -p web-ext-artifacts/signed
+          
+          web-ext sign \
+            --channel=unlisted \
+            --api-key="$AMO_JWT_ISSUER" \
+            --api-secret="$AMO_JWT_SECRET" \
+            --artifacts-dir=web-ext-artifacts/signed
+          
+          XPI_FILE=$(find web-ext-artifacts/signed -name "*.xpi" | head -1)
+          if [ -n "$XPI_FILE" ]; then
+            echo "✅ Stable XPI signed: $XPI_FILE"
+            echo "xpi_path=$XPI_FILE" >> $GITHUB_OUTPUT
+            echo "xpi_name=$(basename $XPI_FILE)" >> $GITHUB_OUTPUT
+            echo "success=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Submit to AMO (listed)
+        id: submit-amo
+        if: steps.config.outputs.channel == 'stable' && env.AMO_JWT_ISSUER != ''
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          echo "🦊 Submitting stable release to AMO..."
+          
+          # Remove update_url for AMO (they don't need it)
+          jq 'del(.browser_specific_settings.gecko.update_url)' manifest.json > manifest.amo.json
+          mv manifest.json manifest.backup.json
+          mv manifest.amo.json manifest.json
+          
+          # Rebuild for AMO
+          web-ext build --overwrite-dest --artifacts-dir=web-ext-artifacts/amo
+          
+          # Submit to AMO
+          web-ext sign \
+            --channel=listed \
+            --api-key="$AMO_JWT_ISSUER" \
+            --api-secret="$AMO_JWT_SECRET" \
+            --artifacts-dir=web-ext-artifacts/amo-signed \
+            --source-dir=. || true
+          
+          # Restore original manifest
+          mv manifest.backup.json manifest.json
+          
+          echo "success=true" >> $GITHUB_OUTPUT
+          echo "✅ Submitted to AMO (pending review)"
+          echo "   Check status: https://addons.mozilla.org/developers/addons"
+
+      # ============================================
+      # FALLBACK - Use unsigned if signing unavailable
+      # ============================================
+      - name: Prepare fallback XPI
+        id: fallback
+        if: steps.sign-beta.outputs.success != 'true' && steps.sign-stable-unlisted.outputs.success != 'true'
+        run: |
+          echo "⚠️ Using unsigned build (AMO secrets not configured)"
+          ZIP_FILE=$(find web-ext-artifacts -maxdepth 1 -name "*.zip" | head -1)
+          if [ -n "$ZIP_FILE" ]; then
+            XPI_FILE="${ZIP_FILE%.zip}.xpi"
+            cp "$ZIP_FILE" "$XPI_FILE"
+            echo "xpi_path=$XPI_FILE" >> $GITHUB_OUTPUT
+            echo "xpi_name=$(basename $XPI_FILE)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine final XPI
+        id: final
+        run: |
+          # Priority: signed beta > signed stable > fallback
+          if [ -n "${{ steps.sign-beta.outputs.xpi_path }}" ]; then
+            echo "xpi_path=${{ steps.sign-beta.outputs.xpi_path }}" >> $GITHUB_OUTPUT
+            echo "xpi_name=${{ steps.sign-beta.outputs.xpi_name }}" >> $GITHUB_OUTPUT
+            echo "signed=true" >> $GITHUB_OUTPUT
+          elif [ -n "${{ steps.sign-stable-unlisted.outputs.xpi_path }}" ]; then
+            echo "xpi_path=${{ steps.sign-stable-unlisted.outputs.xpi_path }}" >> $GITHUB_OUTPUT
+            echo "xpi_name=${{ steps.sign-stable-unlisted.outputs.xpi_name }}" >> $GITHUB_OUTPUT
+            echo "signed=true" >> $GITHUB_OUTPUT
+          elif [ -n "${{ steps.fallback.outputs.xpi_path }}" ]; then
+            echo "xpi_path=${{ steps.fallback.outputs.xpi_path }}" >> $GITHUB_OUTPUT
+            echo "xpi_name=${{ steps.fallback.outputs.xpi_name }}" >> $GITHUB_OUTPUT
+            echo "signed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # ============================================
+      # UPDATE MANIFESTS
+      # ============================================
+      - name: Update beta updates.json
+        if: steps.config.outputs.channel == 'beta' && steps.final.outputs.xpi_path != ''
+        run: |
+          VERSION="${{ steps.config.outputs.version }}"
+          XPI_NAME="${{ steps.final.outputs.xpi_name }}"
+          REPO="${{ github.repository }}"
+          EXT_ID=$(jq -r '.browser_specific_settings.gecko.id' manifest.json)
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${XPI_NAME}"
+          
+          # Update beta-updates.json (create if doesn't exist)
+          if [ ! -f beta-updates.json ]; then
+            echo '{"addons":{"'"$EXT_ID"'":{"updates":[]}}}' > beta-updates.json
+          fi
+          
+          NEW_ENTRY=$(jq -n --arg version "$VERSION" --arg update_link "$DOWNLOAD_URL" \
+            '{"version": $version, "update_link": $update_link}')
+          
+          jq --arg ext_id "$EXT_ID" --argjson entry "$NEW_ENTRY" \
+            '.addons[$ext_id].updates = [.addons[$ext_id].updates[] | select(.version != $entry.version)] + [$entry]' \
+            beta-updates.json > beta-updates.tmp.json
+          mv beta-updates.tmp.json beta-updates.json
+          
+          echo "Updated beta-updates.json:"
+          cat beta-updates.json
+
+      - name: Update stable updates.json
+        if: steps.config.outputs.channel == 'stable' && steps.final.outputs.xpi_path != ''
+        run: |
+          VERSION="${{ steps.config.outputs.version }}"
+          XPI_NAME="${{ steps.final.outputs.xpi_name }}"
+          REPO="${{ github.repository }}"
+          EXT_ID=$(jq -r '.browser_specific_settings.gecko.id' manifest.json)
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${XPI_NAME}"
+          
+          NEW_ENTRY=$(jq -n --arg version "$VERSION" --arg update_link "$DOWNLOAD_URL" \
+            '{"version": $version, "update_link": $update_link}')
+          
+          jq --arg ext_id "$EXT_ID" --argjson entry "$NEW_ENTRY" \
+            '.addons[$ext_id].updates = [.addons[$ext_id].updates[] | select(.version != $entry.version)] + [$entry]' \
+            updates.json > updates.tmp.json
+          mv updates.tmp.json updates.json
+          
+          echo "Updated updates.json:"
+          cat updates.json
+
+      - name: Commit manifest updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add updates.json beta-updates.json manifest.json 2>/dev/null || true
+          git commit -m "chore: release v${{ steps.config.outputs.version }} (${{ steps.config.outputs.channel }})" || echo "No changes to commit"
+          git push origin HEAD:main || echo "Could not push (may need manual merge)"
+
+      # ============================================
+      # CREATE GITHUB RELEASE
+      # ============================================
+      - name: Create GitHub Release
+        if: steps.final.outputs.xpi_path != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.config.outputs.version }}
+          name: "${{ steps.config.outputs.channel == 'beta' && '🧪 Beta' || '🚀 Release' }} v${{ steps.config.outputs.version }}"
+          prerelease: ${{ steps.config.outputs.prerelease }}
+          body: |
+            ## UPOE Trade Manager v${{ steps.config.outputs.version }}
+            
+            ${{ steps.config.outputs.channel == 'beta' && '> ⚠️ **This is a beta release** for testing. It may contain bugs. [Install stable version from AMO](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/) for production use.' || '' }}
+            
+            ### Installation
+            
+            ${{ steps.config.outputs.channel == 'stable' && '**Recommended:** Install from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/) for automatic updates.' || '' }}
+            
+            **Manual Install:**
+            1. Download the `.xpi` file below
+            2. Open Firefox → `about:addons`
+            3. Gear icon → "Install Add-on From File..."
+            4. Select the downloaded file
+            
+            ### Release Info
+            - **Channel**: ${{ steps.config.outputs.channel }}
+            - **Signed**: ${{ steps.final.outputs.signed }}
+            ${{ steps.config.outputs.channel == 'stable' && '- **AMO Status**: Submitted for review' || '- **Auto-updates**: Via beta-updates.json' }}
+            
+            ---
+            🌐 [Website](https://${{ github.repository_owner }}.github.io/UPOE-Trade/) • 📦 [All Releases](https://github.com/${{ github.repository }}/releases)
+          files: ${{ steps.final.outputs.xpi_path }}
+          draft: false
