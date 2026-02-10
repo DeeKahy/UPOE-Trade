@@ -2,7 +2,7 @@
 
 A Firefox extension that helps you save, organize, and quickly access your Path of Exile trade searches with categories and optional fuzzy search enhancement.
 
-🦊 **[Install Stable (AMO)](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/)** | 🧪 **[Download Beta](https://lennartdiegokahn.github.io/UPOE-Trade/)** | 📦 **[All Releases](https://github.com/lennartdiegokahn/UPOE-Trade/releases)**
+🦊 **[Install Stable (AMO)](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/)** | 🧪 **[Download Beta](https://deekahy.github.io/UPOE-Trade/)** | 📦 **[All Releases](https://github.com/deekahy/UPOE-Trade/releases)**
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Firefox](https://img.shields.io/badge/firefox-109%2B-orange)
@@ -62,7 +62,7 @@ A Firefox extension that helps you save, organize, and quickly access your Path 
 Install from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/) for automatic updates through Mozilla.
 
 ### Beta Testing
-Download the latest beta from the [project website](https://lennartdiegokahn.github.io/UPOE-Trade/) to test new features. Beta builds auto-update to new betas.
+Download the latest beta from the [project website](https://deekahy.github.io/UPOE-Trade/) to test new features. Beta builds auto-update to new betas.
 
 ## Usage
 
@@ -218,7 +218,7 @@ git push origin v1.0.1
 **Beta releases** (`v1.0.1-beta.1`, `v1.0.1-rc.1`, etc.):
 - Signed and uploaded to GitHub releases (marked as pre-release)
 - Updates `beta-updates.json` for auto-updates
-- Available immediately on the [project website](https://lennartdiegokahn.github.io/UPOE-Trade/)
+- Available immediately on the [project website](https://deekahy.github.io/UPOE-Trade/)
 - Beta users who install from GitHub get these updates automatically
 
 **Stable releases** (`v1.0.1`):
