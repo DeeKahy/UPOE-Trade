@@ -1,0 +1,12 @@
+{
+  "addons": {
+    "upoe-trade@example.com": {
+      "updates": [
+        {
+          "version": "1.0.0-beta.2",
+          "update_link": "https://github.com/DeeKahy/UPOE-Trade/releases/download/v1.0.0-beta.2/upoe_trade_manager-1.0.0-beta.2.xpi"
+        }
+      ]
+    }
+  }
+}
