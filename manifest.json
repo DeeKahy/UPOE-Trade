@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "UPOE Trade Manager",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0",
   "description": "Save and organize Path of Exile trade searches with categories and quick access",
   "icons": {
     "48": "icons/icon-48.svg",
