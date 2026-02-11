@@ -8,6 +8,7 @@ class OptionsUI {
     await Storage.init();
     await this.loadSettings();
     await this.loadCategories();
+    this.loadVersion();
     this.setupEventListeners();
   }
 
@@ -31,6 +32,22 @@ class OptionsUI {
     select.innerHTML = categories
       .map(c => `<option value="${c.id}" ${c.id === this.defaultCategory ? 'selected' : ''}>${this.escapeHtml(c.name)}</option>`)
       .join('');
+  }
+
+  // Load installed extension version from the manifest and display it in the UI
+  loadVersion() {
+    try {
+      const manifest = (typeof browser !== 'undefined' && browser.runtime && browser.runtime.getManifest)
+        ? browser.runtime.getManifest()
+        : (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest)
+          ? chrome.runtime.getManifest()
+          : null;
+      const version = manifest?.version || '';
+      const el = document.getElementById('extensionVersion');
+      if (el) el.textContent = version;
+    } catch (e) {
+      // Fail silently if runtime/method isn't available
+    }
   }
 
   setupEventListeners() {
