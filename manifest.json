@@ -13,8 +13,8 @@
     "activeTab",
     "webRequest"
   ],
-  "host_permissions": [
-    "*://www.pathofexile.com/*"
+  "web_accessible_resources": [
+    "/stats.json"
   ],
   "content_scripts": [
     {
