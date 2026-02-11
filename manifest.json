@@ -11,10 +11,11 @@
   "permissions": [
     "storage",
     "activeTab",
-    "webRequest"
+    "webRequest",
+    "*://www.pathofexile.com/*"
   ],
   "web_accessible_resources": [
-    "/stats.json"
+    "stats.json"
   ],
   "content_scripts": [
     {
