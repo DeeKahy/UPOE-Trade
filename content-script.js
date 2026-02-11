@@ -11,6 +11,7 @@
     await checkIfTradeSearch();
     observeUrlChanges();
     loadFuzzySearch();
+    loadEquivalentPricing();
   }
 
   // Check if current page is a trade search
@@ -89,6 +90,23 @@
     }
   }
 
+  // Load equivalent pricing feature if enabled
+  async function loadEquivalentPricing() {
+    try {
+      const settings = await Storage.getSettings();
+      const enabled = settings.equivalentPricingEnabled !== false; // Default to true
+      
+      if (enabled && typeof EquivalentPricing !== 'undefined') {
+        console.log('UPOE Trade Manager: Equivalent Pricing enabled');
+        await EquivalentPricing.init();
+      } else if (!enabled) {
+        console.log('UPOE Trade Manager: Equivalent Pricing disabled');
+      }
+    } catch (error) {
+      console.error('UPOE Trade Manager: Error loading equivalent pricing:', error);
+    }
+  }
+
   // Enable fuzzy search functionality
   function enableFuzzySearch() {
     document.body.addEventListener("keydown", appendFuzzyToTarget);
@@ -118,6 +136,12 @@
       } else {
         // Note: Can't easily disable without page reload
         console.log('UPOE Trade Manager: Fuzzy search will disable on next page load');
+      }
+      
+      // Handle equivalent pricing setting change
+      if (typeof EquivalentPricing !== 'undefined') {
+        const epEnabled = newSettings.equivalentPricingEnabled !== false;
+        EquivalentPricing.setEnabled(epEnabled);
       }
     }
   });

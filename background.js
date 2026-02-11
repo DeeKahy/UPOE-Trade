@@ -22,6 +22,25 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
   
+  // Handle poe.ninja API requests (to bypass CORS in content scripts)
+  if (message.type === 'fetchPoeNinja') {
+    fetch(message.url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        sendResponse({ success: true, data: data });
+      })
+      .catch(error => {
+        console.error('UPOE Trade Manager: poe.ninja fetch error:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Keep message channel open for async response
+  }
+  
   return false;
 });
 
