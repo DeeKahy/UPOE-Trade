@@ -103,3 +103,54 @@
   padding: 2px 3px;
   line-height: 1.4;
 }
+.upoe-equivalent-pricing {
+  display: block;
+  font-size: 12px;
+  color: #8b8b8b;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.upoe-equivalent-pricing span {
+  color: #8b8b8b;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.upoe-equals {
+  color: #666;
+  margin-right: 4px;
+}
+
+.upoe-currency-img {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+/* Text labels for currencies (replace icons) */
+.upoe-currency-text {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 6px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 3px;
+  margin-left: 4px;
+  background: rgba(255,255,255,0.02);
+  color: #ddd;
+}
+
+[data-field="price"] .upoe-equivalent-pricing {
+  color: #8b8b8b;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+[data-field="price"]:hover .upoe-equivalent-pricing {
+  color: #8b8b8b;
+  opacity: 1;
+}

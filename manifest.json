@@ -12,7 +12,8 @@
     "storage",
     "activeTab",
     "webRequest",
-    "*://www.pathofexile.com/*"
+    "*://www.pathofexile.com/*",
+    "*://poe.ninja/*"
   ],
   "web_accessible_resources": [
     "stats.json"
@@ -25,8 +26,9 @@
       ],
       "js": [
         "storage.js",
-        "content-script.js",
-        "POENinjaLookup.js"
+        "POENinjaLookup.js",
+        "equivalent-pricing.js",
+        "content-script.js"
       ],
       "css": [
         "styles/content.css"

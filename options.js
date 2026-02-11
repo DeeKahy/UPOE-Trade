@@ -17,6 +17,9 @@ class OptionsUI {
     // Load fuzzy search setting
     document.getElementById('fuzzySearchEnabled').checked = settings.fuzzySearchEnabled ?? true;
     
+    // Load equivalent pricing setting
+    document.getElementById('equivalentPricingEnabled').checked = settings.equivalentPricingEnabled !== false;
+    
     // Default category will be loaded after categories are fetched
     this.defaultCategory = settings.defaultCategory || 'default';
   }
@@ -34,6 +37,11 @@ class OptionsUI {
     // Fuzzy search toggle
     document.getElementById('fuzzySearchEnabled').addEventListener('change', async (e) => {
       await this.saveSetting('fuzzySearchEnabled', e.target.checked);
+    });
+
+    // Equivalent pricing toggle
+    document.getElementById('equivalentPricingEnabled').addEventListener('change', async (e) => {
+      await this.saveSetting('equivalentPricingEnabled', e.target.checked);
     });
 
     // Default category
