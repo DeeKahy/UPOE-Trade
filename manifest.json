@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "UPOE Trade Manager",
-  "version": "1.0.1.10",
-  "description": "Save and organize Path of Exile trade searches with categories and quick access",
+  "version": "1.0.2.1",
+  "description": "Save and organize Path of Exile trade searches, and search build items from pobb.in on the trade site",
   "icons": {
     "48": "icons/icon-48.svg",
     "96": "icons/icon-96.svg",
@@ -10,9 +10,11 @@
   },
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "activeTab",
     "*://www.pathofexile.com/*",
-    "*://poe.ninja/*"
+    "*://poe.ninja/*",
+    "*://pobb.in/*"
   ],
   "content_scripts": [
     {
@@ -26,6 +28,21 @@
       ],
       "css": [
         "styles/content.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://pobb.in/*"
+      ],
+      "js": [
+        "storage.js",
+        "pob-parser.js",
+        "trade-search.js",
+        "pobbin.js"
+      ],
+      "css": [
+        "styles/pobbin.css"
       ],
       "run_at": "document_idle"
     }
