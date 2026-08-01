@@ -12,6 +12,18 @@ browser.runtime.onInstalled.addListener(async (details) => {
   }
 });
 
+// Hosts the background script is willing to fetch on behalf of a content script
+const ALLOWED_FETCH_HOSTS = ['poe.ninja', 'www.pathofexile.com'];
+
+function isAllowedUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && ALLOWED_FETCH_HOSTS.includes(parsed.hostname);
+  } catch (error) {
+    return false;
+  }
+}
+
 // Handle messages from content scripts and sidebar
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('UPOE Trade Manager: Received message:', message.type);
@@ -22,8 +34,13 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
   
-  // Handle poe.ninja API requests (to bypass CORS in content scripts)
-  if (message.type === 'fetchPoeNinja') {
+  // Handle poe.ninja and trade API requests (to bypass CORS in content scripts)
+  if (message.type === 'fetchPoeNinja' || message.type === 'fetchTradeData') {
+    if (!isAllowedUrl(message.url)) {
+      sendResponse({ success: false, error: 'Blocked host' });
+      return false;
+    }
+
     fetch(message.url)
       .then(response => {
         if (!response.ok) {

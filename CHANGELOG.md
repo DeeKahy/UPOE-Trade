@@ -2,6 +2,24 @@
 
 All notable changes to the UPOE Trade Manager extension will be documented in this file.
 
+## [1.0.2] - 2026-08-01
+
+### Added
+- pobb.in trade search. Hovering a piece of gear on a pobb.in build page shows a
+  Trade button that opens a prefilled search on the official trade site
+- Modifier picker so each roll can be included, excluded or given a different
+  minimum before the search is opened
+- Default Listing Type setting, covering all five listing types the trade site
+  offers: Instant Buyout and In Person, Instant Buyout, In Person (Online in
+  League), In Person (Online) and Any
+- League picker, per-search listing type override and a corrupted-only toggle
+  for corrupted items
+- Option to turn the pobb.in integration off in the extension settings
+
+### Changed
+- Trade stat definitions and the league list are fetched from the official trade
+  API and cached locally for a day
+
 ## [1.0.0] - 2026-02-09
 
 ### Added

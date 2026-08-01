@@ -198,6 +198,19 @@
         </label>
       </div>
 
+      <div class="setting">
+        <label>
+          <input type="checkbox" id="pobbinTradeEnabled">
+          <div class="setting-label">
+            <div class="setting-title">Enable pobb.in Trade Search</div>
+            <div class="setting-description">
+              Adds a Trade button to the gear on pobb.in build pages that opens a
+              prefilled search for that item on the official trade site.
+            </div>
+          </div>
+        </label>
+      </div>
+
       <div class="info-box">
         <p>
           Fuzzy search helps find items with similar names even if you don't type the exact name.
@@ -209,6 +222,23 @@
     <div class="section">
       <h2>Default Settings</h2>
       
+      <div class="setting">
+        <div class="setting-label">
+          <div class="setting-title">Default Listing Type</div>
+          <div class="setting-description" style="margin-bottom: 10px;">
+            Which sellers trade searches look for. Instant Buyout listings can be
+            bought without meeting the seller, In Person listings require a whisper.
+          </div>
+          <select id="tradeStatusOption">
+            <option value="available">Instant Buyout and In Person</option>
+            <option value="securable">Instant Buyout</option>
+            <option value="onlineleague">In Person (Online in League)</option>
+            <option value="online">In Person (Online)</option>
+            <option value="any">Any</option>
+          </select>
+        </div>
+      </div>
+
       <div class="setting">
         <div class="setting-label">
           <div class="setting-title">Default Category</div>

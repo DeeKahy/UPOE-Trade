@@ -20,7 +20,13 @@ class OptionsUI {
     
     // Load equivalent pricing setting
     document.getElementById('equivalentPricingEnabled').checked = settings.equivalentPricingEnabled !== false;
-    
+
+    // Load pobb.in trade search setting
+    document.getElementById('pobbinTradeEnabled').checked = settings.pobbinTradeEnabled !== false;
+
+    // Load the listing type trade searches default to
+    document.getElementById('tradeStatusOption').value = settings.tradeStatusOption || 'available';
+
     // Default category will be loaded after categories are fetched
     this.defaultCategory = settings.defaultCategory || 'default';
   }
@@ -59,6 +65,16 @@ class OptionsUI {
     // Equivalent pricing toggle
     document.getElementById('equivalentPricingEnabled').addEventListener('change', async (e) => {
       await this.saveSetting('equivalentPricingEnabled', e.target.checked);
+    });
+
+    // pobb.in trade search toggle
+    document.getElementById('pobbinTradeEnabled').addEventListener('change', async (e) => {
+      await this.saveSetting('pobbinTradeEnabled', e.target.checked);
+    });
+
+    // Default listing type
+    document.getElementById('tradeStatusOption').addEventListener('change', async (e) => {
+      await this.saveSetting('tradeStatusOption', e.target.value);
     });
 
     // Default category

@@ -21,6 +21,14 @@ A Firefox extension that helps you save, organize, and quickly access your Path 
 - Edit and delete categories
 - Move searches between categories
 
+### pobb.in Trade Search
+- Hover any piece of gear on a [pobb.in](https://pobb.in) build page to get a Trade button
+- Reads the Path of Building code the page already publishes, so every roll is exact
+- Opens a prefilled search on the official trade site, no API key or login needed
+- Pick which modifiers to search on and adjust their minimum values first
+- Uniques search by name, rares search by base type plus their modifiers
+- Pick your listing type once in the settings, override it per search when needed
+
 ### Fuzzy Search Enhancement
 - Toggle fuzzy search on/off in settings
 - Automatically prepends `~` to search inputs for fuzzy matching
@@ -99,6 +107,18 @@ To delete a category:
 - **Filter searches:** Use the search bar at the top of the sidebar
 - **Collapse categories:** Click the arrow next to a category name
 
+### Searching a Build's Items
+
+1. Open any build on [pobb.in](https://pobb.in), for example `https://pobb.in/NlUa8ZnB3YGK`
+2. Hover over a piece of gear in the Gear panel
+3. Click the "Trade" button that appears in the corner of the item
+4. Tick the modifiers you care about and adjust their minimum values
+5. Click "Open trade search"
+
+The gear set and loadout selectors on the page are respected, so switching either
+one changes which items the button resolves to. Modifiers that have no equivalent
+on the trade site are listed greyed out and cannot be selected.
+
 ### Enabling Fuzzy Search
 
 1. Right-click the extension icon or open the sidebar
@@ -132,6 +152,10 @@ Access the options page through:
 ### Available Settings
 
 - **Enable Fuzzy Search:** Auto-prepend tilde to search inputs
+- **Enable Equivalent Pricing:** Show chaos and divine equivalents on trade results
+- **Enable pobb.in Trade Search:** Add the Trade button to gear on pobb.in build pages
+- **Default Listing Type:** Which sellers searches look for. Instant Buyout listings
+  can be bought without meeting the seller, In Person listings need a whisper
 - **Default Category:** Choose which category new searches use by default
 
 ## Development
@@ -145,6 +169,10 @@ UPOE-Trade/
 ├── sidebar.html           # Sidebar UI
 ├── sidebar.js             # Sidebar logic
 ├── content-script.js      # Runs on POE trade pages
+├── equivalent-pricing.js  # Chaos/divine equivalents on trade results
+├── pob-parser.js          # Decodes Path of Building codes and item text
+├── trade-search.js        # Maps item modifiers to trade stat filters
+├── pobbin.js              # Runs on pobb.in build pages
 ├── background.js          # Background service worker
 ├── options.html           # Settings page
 ├── options.js             # Settings logic
@@ -267,6 +295,15 @@ Your beta download site will be at `https://yourusername.github.io/UPOE-Trade/`
 - Check Firefox console for errors (F12)
 - Verify storage permissions in `about:addons`
 - Try exporting/importing to reset storage
+
+### Trade button doesn't appear on pobb.in
+- The page needs to be a build page that publishes a Path of Building code
+- Check that "Enable pobb.in Trade Search" is on in the extension options
+- The first click fetches the trade stat definitions, which takes a moment
+
+### A modifier says "no trade stat"
+- Some modifiers have no searchable equivalent, such as Crucible grafts and
+  flask enchantments. Everything else on the item can still be searched
 
 ### Sidebar won't open
 - Ensure you're using Firefox 109 or later

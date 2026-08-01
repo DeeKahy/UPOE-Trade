@@ -8,6 +8,9 @@ const Storage = {
     searches: [],
     settings: {
       fuzzySearchEnabled: true,
+      equivalentPricingEnabled: true,
+      pobbinTradeEnabled: true,
+      tradeStatusOption: 'available',
       defaultCategory: 'default'
     }
   },
