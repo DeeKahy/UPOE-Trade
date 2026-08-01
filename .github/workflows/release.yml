@@ -256,11 +256,14 @@ jobs:
         if: steps.config.outputs.channel == 'beta' && steps.final.outputs.xpi_path != ''
         run: |
           VERSION="${{ steps.config.outputs.version }}"
+          TAG_VERSION="${{ steps.config.outputs.tag_version }}"
           XPI_NAME="${{ steps.final.outputs.xpi_name }}"
           REPO="${{ github.repository }}"
           EXT_ID=$(jq -r '.browser_specific_settings.gecko.id' manifest.json)
-          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${XPI_NAME}"
-          
+          # NOTE: the release is tagged with tag_version (e.g. v1.0.2-beta.1), while
+          # the manifest carries the numeric version (1.0.2.1). The URL must use the tag.
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${TAG_VERSION}/${XPI_NAME}"
+
           # Update beta-updates.json (create if doesn't exist)
           if [ ! -f beta-updates.json ]; then
             echo '{"addons":{"'"$EXT_ID"'":{"updates":[]}}}' > beta-updates.json
@@ -281,11 +284,12 @@ jobs:
         if: steps.config.outputs.channel == 'stable' && steps.final.outputs.xpi_path != ''
         run: |
           VERSION="${{ steps.config.outputs.version }}"
+          TAG_VERSION="${{ steps.config.outputs.tag_version }}"
           XPI_NAME="${{ steps.final.outputs.xpi_name }}"
           REPO="${{ github.repository }}"
           EXT_ID=$(jq -r '.browser_specific_settings.gecko.id' manifest.json)
-          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${XPI_NAME}"
-          
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${TAG_VERSION}/${XPI_NAME}"
+
           NEW_ENTRY=$(jq -n --arg version "$VERSION" --arg update_link "$DOWNLOAD_URL" \
             '{"version": $version, "update_link": $update_link}')
           
