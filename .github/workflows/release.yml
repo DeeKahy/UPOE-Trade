@@ -55,6 +55,21 @@ jobs:
       - name: Install web-ext
         run: npm install -g web-ext
 
+      # Gating on secrets directly inside a step's own `if` is unreliable, so
+      # resolve it once here and let later steps read a plain output.
+      - name: Check AMO credentials
+        id: creds
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+        run: |
+          if [ -n "$AMO_JWT_ISSUER" ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+            echo "AMO credentials present"
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+            echo "AMO credentials missing, signing will be skipped"
+          fi
+
       - name: Determine version and channel
         id: config
         run: |
@@ -129,7 +144,7 @@ jobs:
       # ============================================
       - name: Sign for beta (unlisted)
         id: sign-beta
-        if: steps.config.outputs.channel == 'beta' && env.AMO_JWT_ISSUER != ''
+        if: steps.config.outputs.channel == 'beta' && steps.creds.outputs.available == 'true'
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
@@ -156,73 +171,61 @@ jobs:
           fi
 
       # ============================================
-      # STABLE CHANNEL - Sign and submit to AMO
+      # STABLE CHANNEL - Submit to AMO as a listed version
       # ============================================
-      - name: Sign for stable (unlisted for GitHub)
-        id: sign-stable-unlisted
-        if: steps.config.outputs.channel == 'stable' && env.AMO_JWT_ISSUER != ''
-        env:
-          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
-          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-        run: |
-          echo "📦 Signing stable release for GitHub (unlisted)..."
-          
-          mkdir -p web-ext-artifacts/signed
-          
-          web-ext sign \
-            --channel=unlisted \
-            --api-key="$AMO_JWT_ISSUER" \
-            --api-secret="$AMO_JWT_SECRET" \
-            --artifacts-dir=web-ext-artifacts/signed
-          
-          XPI_FILE=$(find web-ext-artifacts/signed -name "*.xpi" | head -1)
-          if [ -n "$XPI_FILE" ]; then
-            echo "✅ Stable XPI signed: $XPI_FILE"
-            echo "xpi_path=$XPI_FILE" >> $GITHUB_OUTPUT
-            echo "xpi_name=$(basename $XPI_FILE)" >> $GITHUB_OUTPUT
-            echo "success=true" >> $GITHUB_OUTPUT
-          fi
-
+      # AMO version numbers are unique per add-on across BOTH channels, so a
+      # stable release cannot be signed unlisted for GitHub and then submitted
+      # listed under the same number. The listed submission is what matters for
+      # a stable release, so that is the only one we do. Stable users install
+      # from AMO; the GitHub asset is the unsigned build, for reference only.
       - name: Submit to AMO (listed)
         id: submit-amo
-        if: steps.config.outputs.channel == 'stable' && env.AMO_JWT_ISSUER != ''
+        if: steps.config.outputs.channel == 'stable' && steps.creds.outputs.available == 'true'
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
         run: |
           echo "🦊 Submitting stable release to AMO..."
-          
-          # Remove update_url for AMO (they don't need it)
+
+          # AMO rejects a listed add-on that carries its own update_url
           jq 'del(.browser_specific_settings.gecko.update_url)' manifest.json > manifest.amo.json
           mv manifest.json manifest.backup.json
           mv manifest.amo.json manifest.json
-          
-          # Rebuild for AMO
-          web-ext build --overwrite-dest --artifacts-dir=web-ext-artifacts/amo
-          
-          # Submit to AMO
+
+          # A failure here must fail the job. Reporting a green release for a
+          # submission that never landed is worse than no release at all.
+          # Steps run under `bash -e`, so errexit is suspended just long enough
+          # to capture the status and put the original manifest back.
+          set +e
           web-ext sign \
             --channel=listed \
             --api-key="$AMO_JWT_ISSUER" \
             --api-secret="$AMO_JWT_SECRET" \
-            --artifacts-dir=web-ext-artifacts/amo-signed \
-            --source-dir=. || true
-          
-          # Restore original manifest
+            --artifacts-dir=web-ext-artifacts/amo-signed
+          status=$?
+          set -e
+
           mv manifest.backup.json manifest.json
-          
+
+          if [ $status -ne 0 ]; then
+            echo "❌ AMO submission failed"
+            exit $status
+          fi
+
           echo "success=true" >> $GITHUB_OUTPUT
           echo "✅ Submitted to AMO (pending review)"
           echo "   Check status: https://addons.mozilla.org/developers/addons"
 
       # ============================================
-      # FALLBACK - Use unsigned if signing unavailable
+      # FALLBACK - Unsigned build for the GitHub release asset
       # ============================================
+      # Always runs for stable (AMO holds the signed copy) and for betas only
+      # when signing did not produce an XPI.
       - name: Prepare fallback XPI
         id: fallback
-        if: steps.sign-beta.outputs.success != 'true' && steps.sign-stable-unlisted.outputs.success != 'true'
+        if: steps.sign-beta.outputs.success != 'true'
         run: |
-          echo "⚠️ Using unsigned build (AMO secrets not configured)"
+          echo "Packaging unsigned build for the GitHub release asset"
           ZIP_FILE=$(find web-ext-artifacts -maxdepth 1 -name "*.zip" | head -1)
           if [ -n "$ZIP_FILE" ]; then
             XPI_FILE="${ZIP_FILE%.zip}.xpi"
@@ -234,14 +237,10 @@ jobs:
       - name: Determine final XPI
         id: final
         run: |
-          # Priority: signed beta > signed stable > fallback
+          # Priority: signed beta > unsigned build
           if [ -n "${{ steps.sign-beta.outputs.xpi_path }}" ]; then
             echo "xpi_path=${{ steps.sign-beta.outputs.xpi_path }}" >> $GITHUB_OUTPUT
             echo "xpi_name=${{ steps.sign-beta.outputs.xpi_name }}" >> $GITHUB_OUTPUT
-            echo "signed=true" >> $GITHUB_OUTPUT
-          elif [ -n "${{ steps.sign-stable-unlisted.outputs.xpi_path }}" ]; then
-            echo "xpi_path=${{ steps.sign-stable-unlisted.outputs.xpi_path }}" >> $GITHUB_OUTPUT
-            echo "xpi_name=${{ steps.sign-stable-unlisted.outputs.xpi_name }}" >> $GITHUB_OUTPUT
             echo "signed=true" >> $GITHUB_OUTPUT
           elif [ -n "${{ steps.fallback.outputs.xpi_path }}" ]; then
             echo "xpi_path=${{ steps.fallback.outputs.xpi_path }}" >> $GITHUB_OUTPUT
@@ -327,14 +326,8 @@ jobs:
             
             ### Installation
             
-            ${{ steps.config.outputs.channel == 'stable' && '**Recommended:** Install from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/) for automatic updates.' || '' }}
-            
-            **Manual Install:**
-            1. Download the `.xpi` file below
-            2. Open Firefox → `about:addons`
-            3. Gear icon → "Install Add-on From File..."
-            4. Select the downloaded file
-            
+            ${{ steps.config.outputs.channel == 'stable' && '**Install from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/upoe-trade-manager/).** AMO holds the signed copy of this release and handles updates. The file attached below is the unsigned build, kept for reference, and release Firefox will refuse to install it.' || '**Manual install:** download the `.xpi` below, open `about:addons` in Firefox, then use the gear icon and "Install Add-on From File..." to select it.' }}
+
             ### Release Info
             - **Channel**: ${{ steps.config.outputs.channel }}
             - **Signed**: ${{ steps.final.outputs.signed }}
