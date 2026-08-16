@@ -2,6 +2,41 @@
 
 All notable changes to the UPOE Trade Manager extension will be documented in this file.
 
+## [1.1.0] - 2026-08-16
+
+### Added
+- Trade search on maxroll Path of Exile build guides, covering the items named
+  in the guide text and the gear cells in the interactive equipment widget.
+  Switching between the Campaign, Early, Midgame, Late and Aspirational sets
+  changes which item a cell searches for
+- Trade search on mobalytics build guides, covering the items named in the
+  guide text and the gear tab. Gear tiles are read from the tooltip the page
+  shows on hover, so they carry their real modifiers
+- Gem searches, with minimum level, minimum quality and a corrupted choice.
+  The panel opens on the level and quality the build actually runs. Available
+  on maxroll, mobalytics and pobb.in
+- Pseudo modifiers. Life and resistance rolls are combined into the total life
+  and total resistance filters the trade site indexes, which is what makes a
+  rare search return results at all
+- Property filters for armour, evasion and energy shield, replacing the local
+  modifiers that the trade site does not index separately
+- Search by options for widening a search from a unique name to its base type
+  or to the whole item category
+- Link and socket colour filters for linked items
+- Roll strictness, defaulting to 80%, so a search asks for a share of the
+  build item's roll rather than the exact value. Configurable in the settings
+
+### Changed
+- Rewrote the pobb.in trade search around the filters the trade site actually
+  indexes. Local modifiers such as increased armour are no longer searched as
+  modifiers, since the property filters already cover them
+- The trade panel is shared by every supported site, so a search built on
+  maxroll, mobalytics and pobb.in behaves identically
+
+### Fixed
+- Stable releases never reached the add-on site. The same version was signed on
+  both channels, which is not allowed, and the failure was being swallowed
+
 ## [1.0.2] - 2026-08-01
 
 ### Added
