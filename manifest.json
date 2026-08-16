@@ -14,7 +14,9 @@
     "activeTab",
     "*://www.pathofexile.com/*",
     "*://poe.ninja/*",
-    "*://pobb.in/*"
+    "*://pobb.in/*",
+    "*://maxroll.gg/*",
+    "*://planners.maxroll.gg/*"
   ],
   "content_scripts": [
     {
@@ -46,7 +48,26 @@
         "styles/pobbin.css"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://maxroll.gg/poe/*"
+      ],
+      "js": [
+        "storage.js",
+        "trade-search.js",
+        "trade-panel.js",
+        "maxroll-parser.js",
+        "maxroll.js"
+      ],
+      "css": [
+        "styles/pobbin.css"
+      ],
+      "run_at": "document_idle"
     }
+  ],
+  "web_accessible_resources": [
+    "data/maxroll-data.json"
   ],
   "background": {
     "scripts": [

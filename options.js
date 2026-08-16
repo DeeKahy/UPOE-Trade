@@ -23,6 +23,7 @@ class OptionsUI {
 
     // Load pobb.in trade search setting
     document.getElementById('pobbinTradeEnabled').checked = settings.pobbinTradeEnabled !== false;
+    document.getElementById('maxrollTradeEnabled').checked = settings.maxrollTradeEnabled !== false;
 
     // Load the listing type trade searches default to
     document.getElementById('tradeStatusOption').value = settings.tradeStatusOption || 'available';
@@ -69,6 +70,10 @@ class OptionsUI {
     });
 
     // pobb.in trade search toggle
+    document.getElementById('maxrollTradeEnabled').addEventListener('change', async (e) => {
+      await this.saveSetting('maxrollTradeEnabled', e.target.checked);
+    });
+
     document.getElementById('pobbinTradeEnabled').addEventListener('change', async (e) => {
       await this.saveSetting('pobbinTradeEnabled', e.target.checked);
     });

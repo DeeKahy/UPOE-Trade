@@ -13,7 +13,7 @@ browser.runtime.onInstalled.addListener(async (details) => {
 });
 
 // Hosts the background script is willing to fetch on behalf of a content script
-const ALLOWED_FETCH_HOSTS = ['poe.ninja', 'www.pathofexile.com'];
+const ALLOWED_FETCH_HOSTS = ['poe.ninja', 'www.pathofexile.com', 'planners.maxroll.gg'];
 
 function isAllowedUrl(url) {
   try {
