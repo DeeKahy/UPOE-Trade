@@ -177,6 +177,123 @@
     return String(text || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
   }
 
+
+  // The gear tab renders a full tooltip on hover: name, base, properties and
+  // both mod lists. That is the real item, and it is better than anything the
+  // build code can offer for a tile, because the grid is drawn from separate
+  // data and its items are often absent from the code entirely.
+  //
+  // Structure is two <p> for name and base, label/value span pairs for
+  // properties, and one <ul> per mod group, implicits first when there are two.
+  const PROPERTY_KEYS = {
+    'armour': 'armour',
+    'evasion rating': 'evasion',
+    'energy shield': 'energyShield'
+  };
+
+  // Tooltips show a unique's roll range, "(4-6)% increased Cast Speed". The low
+  // end is the only value every copy of the item is guaranteed to have.
+  function flattenRanges(text) {
+    return text.replace(/\((\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\)/g, '$1');
+  }
+
+  function findTooltip(name) {
+    const key = squash(name);
+    let best = null;
+
+    for (const node of document.querySelectorAll('div')) {
+      if (node.querySelector('ul li') === null) continue;
+
+      const heading = node.querySelector('p');
+      if (!heading || squash(heading.textContent) !== key) continue;
+
+      // The deepest match is the tooltip itself rather than a wrapper
+      if (!best || best.contains(node)) best = node;
+    }
+
+    return best;
+  }
+
+  function parseTooltip(tip) {
+    const headings = tip.querySelectorAll('p');
+    const name = headings[0] ? headings[0].textContent.trim() : null;
+    const baseType = headings[1] ? headings[1].textContent.trim() : name;
+    if (!name) return null;
+
+    const item = {
+      rarity: 'UNIQUE',
+      name: name,
+      baseType: baseType,
+      itemLevel: null,
+      quality: null,
+      corrupted: /corrupted/i.test(tip.textContent || ''),
+      armour: null,
+      evasion: null,
+      energyShield: null,
+      sockets: null,
+      influences: [],
+      implicits: [],
+      explicits: []
+    };
+
+    for (const row of tip.querySelectorAll('div')) {
+      const spans = row.children;
+      if (spans.length !== 2 || spans[0].tagName !== 'SPAN') continue;
+
+      const label = spans[0].textContent.replace(':', '').trim().toLowerCase();
+      const field = PROPERTY_KEYS[label];
+      if (!field) continue;
+
+      const value = parseInt(spans[1].textContent.replace(/[^0-9]/g, ''), 10);
+      if (!Number.isNaN(value)) item[field] = value;
+    }
+
+    const toMods = list => [...list.querySelectorAll('li')]
+      .map(line => flattenRanges(line.textContent.trim()))
+      .filter(Boolean)
+      .map(text => ({ text: text, crafted: false, fractured: false, enchant: false, scourge: false }));
+
+    const lists = tip.querySelectorAll('ul');
+    if (lists.length > 1) {
+      item.implicits = toMods(lists[0]);
+      item.explicits = toMods(lists[1]);
+    } else if (lists.length === 1) {
+      item.explicits = toMods(lists[0]);
+    }
+
+    return item;
+  }
+
+  // Hovering the chip can dismiss the tooltip, so it is asked for again and
+  // given a moment to render before being read
+  async function itemFromTooltip(node) {
+    const label = labelFor(node);
+    if (!label.named) return null;
+
+    let tip = findTooltip(label.text);
+
+    if (!tip) {
+      const box = node.getBoundingClientRect();
+      const options = {
+        bubbles: true, cancelable: true, composed: true,
+        clientX: box.x + box.width / 2, clientY: box.y + box.height / 2,
+        pointerId: 1, pointerType: 'mouse', isPrimary: true
+      };
+
+      for (const type of ['pointerover', 'mouseover', 'pointermove', 'mousemove']) {
+        const Ctor = type.startsWith('pointer') ? PointerEvent : MouseEvent;
+        node.dispatchEvent(new Ctor(type, options));
+      }
+
+      for (let attempt = 0; attempt < 8 && !tip; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 120));
+        tip = findTooltip(label.text);
+      }
+    }
+
+    return tip ? parseTooltip(tip) : null;
+  }
+
   // A page element only earns a button if the build code actually knows it
   function hoverTarget(node) {
     if (!node || !node.closest) return null;
@@ -293,6 +410,16 @@
     if (!found) {
       TradePanel.message(`Could not identify that one${label.text ? ` (${label.text})` : ''}.`);
       return;
+    }
+
+    // A gear tile's tooltip beats the build code, which frequently does not
+    // contain what the grid is showing
+    if (found.kind === 'item' && target.node.tagName === 'IMG') {
+      const detailed = await itemFromTooltip(target.node);
+      if (detailed) {
+        TradePanel.open([detailed], {});
+        return;
+      }
     }
 
     if (found.kind === 'gem') {
