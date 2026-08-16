@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "UPOE Trade Manager",
-  "version": "1.0.2",
+  "version": "1.1.0.1",
   "description": "Save and organize Path of Exile trade searches, and search build items from pobb.in on the trade site",
   "icons": {
     "48": "icons/icon-48.svg",
