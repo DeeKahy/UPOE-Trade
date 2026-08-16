@@ -60,12 +60,53 @@ const PobParser = {
 
     return {
       items: this.parseItemBlocks(xml),
+      gems: this.parseGems(xml),
       itemSets: itemSets,
       treeSpecs: this.parseTreeSpecs(xml),
       activeItemSet: activeSetIndex >= 0 ? activeSetIndex : 0,
       // activeSpec is stored one-based
       activeSpec: treeAttrs.activeSpec ? Number(treeAttrs.activeSpec) - 1 : 0
     };
+  },
+
+  // Gems live in <Gem/> nodes on the skill groups. The trade site keeps the
+  // "Support" suffix that nameSpec drops, and the gemId is what says whether a
+  // gem is one: Metadata/Items/Gems/SupportGemRapidDecay is Swift Affliction.
+  parseGems(xml) {
+    const gems = {};
+    const pattern = /<Gem\s([^>]*)\/>/g;
+    let match;
+
+    while ((match = pattern.exec(xml)) !== null) {
+      const attrs = this.parseAttributes(match[1]);
+      const name = attrs.nameSpec && this.decodeEntities(attrs.nameSpec).trim();
+      if (!name) continue;
+
+      const support = /\/SupportGem/.test(attrs.gemId || '');
+      const tradeName = support && !/ Support$/.test(name) ? `${name} Support` : name;
+
+      const level = attrs.level ? Number(attrs.level) : null;
+      const quality = attrs.quality ? Number(attrs.quality) : null;
+
+      // The same gem shows up in several skill groups, at different levels in a
+      // levelling section. The highest is the one worth searching.
+      const key = tradeName.toLowerCase();
+      const current = gems[key];
+
+      if (!current) {
+        gems[key] = { name: tradeName, support: support, level: level, quality: quality };
+        continue;
+      }
+
+      if (level !== null && (current.level === null || level > current.level)) {
+        current.level = level;
+      }
+      if (quality !== null && (current.quality === null || quality > current.quality)) {
+        current.quality = quality;
+      }
+    }
+
+    return gems;
   },
 
   parseItemBlocks(xml) {

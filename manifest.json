@@ -16,7 +16,8 @@
     "*://poe.ninja/*",
     "*://pobb.in/*",
     "*://maxroll.gg/*",
-    "*://planners.maxroll.gg/*"
+    "*://planners.maxroll.gg/*",
+    "*://mobalytics.gg/*"
   ],
   "content_scripts": [
     {
@@ -59,6 +60,22 @@
         "trade-panel.js",
         "maxroll-parser.js",
         "maxroll.js"
+      ],
+      "css": [
+        "styles/pobbin.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://mobalytics.gg/poe/*"
+      ],
+      "js": [
+        "storage.js",
+        "trade-search.js",
+        "trade-panel.js",
+        "pob-parser.js",
+        "mobalytics.js"
       ],
       "css": [
         "styles/pobbin.css"
