@@ -48,7 +48,30 @@
     document.addEventListener('mouseover', onMouseOver, true);
     document.addEventListener('scroll', hideChipNow, true);
 
+    // The code is already on the page, so decoding it up front costs nothing
+    // and is what lets a hover know whether it has anything to offer. Without
+    // it the first hover decorates everything and the first click explains
+    // that it cannot.
+    await waitForBuild();
+
     console.log('UPOE Trade Manager: mobalytics trade search ready');
+  }
+
+  // The field is rendered by the page's own scripts, so it is not always there
+  // when the content script runs
+  async function waitForBuild() {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      try {
+        if (await loadBuild()) return true;
+      } catch (error) {
+        console.error('UPOE Trade Manager: could not decode the build code', error);
+        return false;
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    console.log('UPOE Trade Manager: no Path of Building code on this page');
+    return false;
   }
 
   // The field is keyed by id, with a scan for a long deflate payload as backup
@@ -155,10 +178,10 @@
     return null;
   }
 
+  // No match means no button. An element the build code does not know about
+  // should look inert, not offer a search that cannot be built.
   function resolvable(node) {
-    // Before the code is parsed everything is a candidate, checked on click
-    if (!state.build) return { node: node };
-
+    if (!state.build) return null;
     return lookup(labelFor(node)) ? { node: node } : null;
   }
 
@@ -191,10 +214,21 @@
     clearTimeout(state.hideTimer);
     state.chipTarget = target;
 
+    // The chip is right aligned to its left coordinate, so a tile gets it
+    // tucked into the top corner while a mention gets it alongside, on the same
+    // line. Floating it above a mention lands it on the previous line of prose.
     const box = target.node.getBoundingClientRect();
     const tile = target.node.tagName === 'IMG';
-    state.chip.style.left = `${box.right - (tile ? 6 : 2)}px`;
-    state.chip.style.top = `${box.top - (tile ? 4 : 18)}px`;
+
+    if (tile) {
+      state.chip.style.left = `${box.right - 6}px`;
+      state.chip.style.top = `${box.top - 4}px`;
+    } else {
+      const width = state.chip.offsetWidth || 46;
+      state.chip.style.left = `${Math.min(box.right + width + 6, window.innerWidth - 4)}px`;
+      state.chip.style.top = `${box.top + (box.height - 20) / 2}px`;
+    }
+
     state.chip.classList.add('upoe-visible');
   }
 
@@ -209,14 +243,10 @@
 
   async function openFor(target) {
     hideChipNow();
-    TradePanel.message('Loading build data...');
 
+    // Re-read in case the page swapped in another variant's code since load
     try {
-      const build = await loadBuild();
-      if (!build) {
-        TradePanel.message('No Path of Building code on this page.');
-        return;
-      }
+      await loadBuild();
     } catch (error) {
       console.error('UPOE Trade Manager: could not decode the build code', error);
       TradePanel.message('Could not read the build code on this page.');
