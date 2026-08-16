@@ -118,6 +118,62 @@
     state.chip = chip;
   }
 
+  // The interactive equipment widget hydrates well after the page loads, so it
+  // is reached by delegation rather than by wiring elements up front. Its gear
+  // cells carry the slot in a class, poe-PaperdollSlot poe-slot-Weapon, which
+  // is the same vocabulary the planner uses for its own slot keys.
+  const SLOT_ALIASES = {
+    Helmet: 'Helm',
+    Weapon1: 'Weapon',
+    Weapon2: 'Offhand',
+    Shield: 'Offhand',
+    Ring1: 'Ring'
+  };
+
+  function slotNameOf(node) {
+    for (const name of node.classList) {
+      if (name.startsWith('poe-slot-')) return name.slice('poe-slot-'.length);
+    }
+    return null;
+  }
+
+  // Which gear set the widget is showing. The header buttons are labelled with
+  // the profile names, and the active one carries a hashed _active_ class.
+  function activeProfile() {
+    const buttons = document.querySelectorAll('[class*="PlannerEquipment__headerButton"]');
+
+    for (const button of buttons) {
+      if (!/(^|\s|_)active(_|\s|$)/.test(button.className)) continue;
+
+      const label = (button.textContent || '').trim();
+      const match = state.build.profiles.find(profile => profile.name === label);
+      if (match) return match;
+    }
+
+    // Before anything is clicked the embed still names its starting variant
+    const embed = document.querySelector('[data-poe-type=plannerEquipment]');
+    const variant = embed && embed.getAttribute('data-poe-variant');
+    const byId = variant && state.build.profiles.find(profile => profile.id === variant);
+
+    return byId || state.build.profiles[0] || null;
+  }
+
+  function itemInSlot(node) {
+    const slot = slotNameOf(node);
+    if (!slot) return null;
+
+    const profile = activeProfile();
+    if (!profile) return null;
+
+    const slots = profile.slots || {};
+    const itemId = slots[slot] !== undefined ? slots[slot]
+      : slots[SLOT_ALIASES[slot]];
+    if (itemId === undefined) return null;
+
+    const raw = state.build.items[String(itemId)];
+    return raw ? MaxrollParser.parseItem(raw) : null;
+  }
+
   // Items and gems share the markup. Items are keyed by an id opening on a
   // capital, gems by a hash, so gems are recognised by their printed name
   // instead. Either way the mention only earns a button if it resolves.
@@ -134,22 +190,37 @@
     return MaxrollParser.gemByName((node.textContent || '').trim()) ? 'gem' : null;
   }
 
+  // A gear cell in the widget, or an item or gem named in the prose
+  function hoverTarget(node) {
+    if (!node || !node.closest) return null;
+
+    const cell = node.closest('.poe-PaperdollSlot');
+    if (cell) return slotNameOf(cell) ? { kind: 'slot', node: cell } : null;
+
+    const mention = node.closest('span.poe-item');
+    const kind = mentionKind(mention);
+    return kind ? { kind: kind, node: mention } : null;
+  }
+
   function onMouseOver(event) {
     if (!state.enabled) return;
 
-    const node = event.target.closest ? event.target.closest('span.poe-item') : null;
+    const target = hoverTarget(event.target);
 
-    if (!mentionKind(node)) {
+    if (!target) {
       if (state.chip && !state.chip.contains(event.target)) scheduleHideChip();
       return;
     }
 
     clearTimeout(state.hideTimer);
-    state.chipTarget = node;
+    state.chipTarget = target;
 
-    const box = node.getBoundingClientRect();
-    state.chip.style.left = `${box.right - 2}px`;
-    state.chip.style.top = `${box.top - 18}px`;
+    // A gear cell is a tile with room for the chip inside it, a mention is a
+    // run of text that the chip has to sit above
+    const box = target.node.getBoundingClientRect();
+    const inset = target.kind === 'slot';
+    state.chip.style.left = `${box.right - (inset ? 6 : 2)}px`;
+    state.chip.style.top = `${box.top - (inset ? 4 : 18)}px`;
     state.chip.classList.add('upoe-visible');
   }
 
@@ -204,7 +275,7 @@
     return true;
   }
 
-  async function openFor(node) {
+  async function openFor(target) {
     hideChipNow();
     TradePanel.message('Loading build data...');
 
@@ -216,13 +287,23 @@
       return;
     }
 
-    if (mentionKind(node) === 'gem') {
-      if (openGem(node)) return;
+    if (target.kind === 'slot') {
+      const equipped = itemInSlot(target.node);
+      if (!equipped) {
+        TradePanel.message('That slot is empty in the set being shown.');
+        return;
+      }
+      TradePanel.open([equipped], { slot: equipped.slot });
+      return;
+    }
+
+    if (target.kind === 'gem') {
+      if (openGem(target.node)) return;
       TradePanel.message('No gem data for that mention.');
       return;
     }
 
-    const item = resolve(node);
+    const item = resolve(target.node);
     if (!item) {
       TradePanel.message('No item data for that mention.');
       return;
