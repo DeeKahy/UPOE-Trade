@@ -58,19 +58,23 @@
   }
 
   // The field is rendered by the page's own scripts, so it is not always there
-  // when the content script runs
+  // when the content script runs, and it can be briefly present but empty. A
+  // decode failure is not fatal either: the value may have been read mid
+  // render, so keep trying rather than giving up on the page.
   async function waitForBuild() {
-    for (let attempt = 0; attempt < 20; attempt++) {
+    for (let attempt = 0; attempt < 40; attempt++) {
       try {
-        if (await loadBuild()) return true;
+        if (await loadBuild()) {
+          console.log('UPOE Trade Manager: mobalytics build code loaded');
+          return true;
+        }
       } catch (error) {
-        console.error('UPOE Trade Manager: could not decode the build code', error);
-        return false;
+        console.warn('UPOE Trade Manager: build code not readable yet', error);
       }
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    console.log('UPOE Trade Manager: no Path of Building code on this page');
+    console.log('UPOE Trade Manager: no usable Path of Building code found, falling back to checking on click');
     return false;
   }
 
@@ -155,14 +159,22 @@
     return file.replace(/\.\w+$/, '').replace(/(SkillGem|Gem|Unique\d*)$/, '');
   }
 
+  // A label is only "named" when it came from text the page wrote for a reader,
+  // alt text or a mention. A name derived from an art file is a guess, fit for
+  // matching against the build code but not for searching on directly.
   function labelFor(node) {
-    const raw = node.tagName === 'IMG'
-      ? labelFromImage(node)
-      : (node.textContent || '');
+    if (node.tagName !== 'IMG') return { text: clean(node.textContent), named: true };
 
-    // Mentions qualify the item for the reader, "Cinderswallow Urn (ES on
-    // Kill)", and the qualifier is not part of the name
-    return String(raw).replace(/\s*\([^)]*\)\s*$/, '').trim();
+    const alt = (node.alt || '').trim();
+    if (alt) return { text: clean(alt), named: true };
+
+    return { text: clean(labelFromImage(node)), named: false };
+  }
+
+  // Mentions qualify the item for the reader, "Cinderswallow Urn (ES on Kill)",
+  // and the qualifier is not part of the name
+  function clean(text) {
+    return String(text || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
   }
 
   // A page element only earns a button if the build code actually knows it
@@ -179,15 +191,18 @@
   }
 
   // No match means no button. An element the build code does not know about
-  // should look inert, not offer a search that cannot be built.
+  // should look inert rather than offer a search that cannot be built.
   function resolvable(node) {
     if (!state.build) return null;
     return lookup(labelFor(node)) ? { node: node } : null;
   }
 
-  // Gems and items share both surfaces, so the build code decides which it is
+  // Gems and items share both surfaces, so the build code decides which it is.
+  // The equipment grid is drawn from separate data, so plenty of what it shows
+  // is absent from the code; a tile that names its item is still searchable,
+  // and for a unique the name is the entire query.
   function lookup(label) {
-    const key = squash(label);
+    const key = squash(label.text);
     if (!key) return null;
 
     const gems = state.build.gems || {};
@@ -198,7 +213,22 @@
     }
 
     const item = state.byName[key];
-    return item ? { kind: 'item', item: item } : null;
+    if (item) return { kind: 'item', item: item };
+
+    if (!label.named) return null;
+
+    return {
+      kind: 'item',
+      item: {
+        rarity: 'UNIQUE',
+        name: label.text,
+        baseType: label.text,
+        itemLevel: null, quality: null, corrupted: false,
+        armour: null, evasion: null, energyShield: null, sockets: null,
+        influences: [], implicits: [], explicits: [],
+        mentionOnly: true
+      }
+    };
   }
 
   function onMouseOver(event) {
@@ -253,9 +283,15 @@
       return;
     }
 
-    const found = lookup(labelFor(target.node));
+    if (!state.build) {
+      TradePanel.message('Could not read the build code on this page.');
+      return;
+    }
+
+    const label = labelFor(target.node);
+    const found = lookup(label);
     if (!found) {
-      TradePanel.message('That one is not in the build code.');
+      TradePanel.message(`Could not identify that one${label.text ? ` (${label.text})` : ''}.`);
       return;
     }
 
