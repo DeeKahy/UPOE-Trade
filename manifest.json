@@ -39,6 +39,7 @@
         "storage.js",
         "pob-parser.js",
         "trade-search.js",
+        "trade-panel.js",
         "pobbin.js"
       ],
       "css": [

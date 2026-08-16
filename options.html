@@ -241,6 +241,25 @@
 
       <div class="setting">
         <div class="setting-label">
+          <div class="setting-title">Default Roll Strictness</div>
+          <div class="setting-description" style="margin-bottom: 10px;">
+            How close a listing has to be to the build item. Each roll is relaxed to
+            this share of its value, so 80% asks for a life roll of 72 on a build item
+            that has 90. Searching at 100% asks for the exact rolls and usually returns
+            nothing. Every search can override this on the spot.
+          </div>
+          <select id="tradeMinPercent">
+            <option value="60">60% (loose)</option>
+            <option value="70">70%</option>
+            <option value="80">80% (recommended)</option>
+            <option value="90">90%</option>
+            <option value="100">100% (exact rolls or better)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="setting">
+        <div class="setting-label">
           <div class="setting-title">Default Category</div>
           <div class="setting-description" style="margin-bottom: 10px;">
             New searches saved from the content page will use this category by default.

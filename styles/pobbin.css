@@ -241,3 +241,92 @@
   background: #3a3222;
   border-color: #af8f4a;
 }
+
+/* Sections group the panel into the same blocks the query is built from */
+.upoe-section {
+  margin-bottom: 12px;
+}
+
+.upoe-section-title {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a7f66;
+  margin-bottom: 6px;
+}
+
+/* Chips pick one option out of a row, for the search target and the links */
+.upoe-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.upoe-chip {
+  padding: 4px 9px;
+  border: 1px solid #3a3223;
+  border-radius: 3px;
+  background: #1d1912;
+  color: #a89b7d;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.upoe-chip:hover {
+  border-color: #6a5a38;
+  color: #d8cba8;
+}
+
+.upoe-chip-on {
+  background: #2a2418;
+  border-color: #af8f4a;
+  color: #f0e2bb;
+}
+
+.upoe-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 0;
+  font-size: 12px;
+  color: #c8c8c8;
+  cursor: pointer;
+}
+
+/* A badge says why a roll is switched off, so a short search is explainable */
+.upoe-badge {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: #2a2418;
+  color: #8a7f66;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.upoe-mod-superseded .upoe-mod-label span:first-of-type {
+  color: #6f6a5e;
+}
+
+.upoe-strictness {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 10px;
+  padding-top: 10px;
+  border-top: 1px solid #2a2418;
+}
+
+.upoe-strictness-label {
+  font-size: 11px;
+  color: #a89b7d;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.upoe-strictness input[type="range"] {
+  flex: 1;
+  accent-color: #af8f4a;
+}

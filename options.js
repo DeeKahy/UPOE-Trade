@@ -26,6 +26,7 @@ class OptionsUI {
 
     // Load the listing type trade searches default to
     document.getElementById('tradeStatusOption').value = settings.tradeStatusOption || 'available';
+    document.getElementById('tradeMinPercent').value = String(settings.tradeMinPercent === undefined ? 80 : settings.tradeMinPercent);
 
     // Default category will be loaded after categories are fetched
     this.defaultCategory = settings.defaultCategory || 'default';
@@ -73,6 +74,10 @@ class OptionsUI {
     });
 
     // Default listing type
+    document.getElementById('tradeMinPercent').addEventListener('change', async (e) => {
+      await this.saveSetting('tradeMinPercent', Number(e.target.value));
+    });
+
     document.getElementById('tradeStatusOption').addEventListener('change', async (e) => {
       await this.saveSetting('tradeStatusOption', e.target.value);
     });

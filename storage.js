@@ -10,7 +10,11 @@ const Storage = {
       fuzzySearchEnabled: true,
       equivalentPricingEnabled: true,
       pobbinTradeEnabled: true,
+      maxrollTradeEnabled: true,
       tradeStatusOption: 'available',
+      // Each roll is relaxed to this share of the build item's value. Anything
+      // near 100 stops finding listings, which is the whole problem this solves.
+      tradeMinPercent: 80,
       defaultCategory: 'default'
     }
   },

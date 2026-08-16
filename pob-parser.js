@@ -172,6 +172,12 @@ const PobParser = {
       itemLevel: null,
       quality: null,
       corrupted: false,
+      // Defence values and sockets drive the property and link filters, which
+      // stand in for the local mods the trade site does not index as stats
+      armour: null,
+      evasion: null,
+      energyShield: null,
+      sockets: null,
       influences: [],
       implicits: [],
       explicits: [],
@@ -221,6 +227,20 @@ const PobParser = {
 
       const qualityMatch = line.match(/^Quality:\s*(\d+)/i);
       if (qualityMatch) item.quality = Number(qualityMatch[1]);
+
+      // "Armour: 2320", and the percentile sibling that must not be mistaken
+      // for it, plus the socket layout as "R-W-W-W G B"
+      const armourMatch = line.match(/^Armour:\s*(\d+)/i);
+      if (armourMatch) item.armour = Number(armourMatch[1]);
+
+      const evasionMatch = line.match(/^Evasion(?:\s*Rating)?:\s*(\d+)/i);
+      if (evasionMatch) item.evasion = Number(evasionMatch[1]);
+
+      const energyShieldMatch = line.match(/^Energy\s*Shield:\s*(\d+)/i);
+      if (energyShieldMatch) item.energyShield = Number(energyShieldMatch[1]);
+
+      const socketsMatch = line.match(/^Sockets:\s*(.+)$/i);
+      if (socketsMatch) item.sockets = socketsMatch[1].trim();
 
       const variantMatch = line.match(/^Selected Variant:\s*(\d+)/i);
       if (variantMatch && selectedVariant === null) selectedVariant = Number(variantMatch[1]);
