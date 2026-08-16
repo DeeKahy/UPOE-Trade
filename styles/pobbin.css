@@ -96,6 +96,7 @@
 .upoe-rarity-magic { color: #8888ff; }
 .upoe-rarity-rare { color: #ffff77; }
 .upoe-rarity-unique { color: #af6025; }
+.upoe-rarity-gem { color: #1ba29b; }
 
 .upoe-panel-controls {
   display: flex;
@@ -329,4 +330,10 @@
 .upoe-strictness input[type="range"] {
   flex: 1;
   accent-color: #af8f4a;
+}
+
+/* Gem searches have no modifier rows, just the three numbers that matter */
+.upoe-gem-number {
+  width: 100%;
+  max-width: 120px;
 }

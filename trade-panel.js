@@ -119,6 +119,133 @@ const TradePanel = {
     this.render(index, list, 0, options || {});
   },
 
+  // Gems carry no modifiers, so the whole search is the name plus level,
+  // quality and whether it is corrupted
+  renderGem(gem) {
+    const panel = this.shell();
+    const body = panel.querySelector('.upoe-panel-body');
+
+    panel.querySelector('.upoe-panel-title').textContent = gem.name;
+
+    const base = document.createElement('div');
+    base.className = 'upoe-panel-base upoe-rarity-gem';
+    base.textContent = gem.support ? 'Support gem' : 'Skill gem';
+    body.appendChild(base);
+
+    const controls = document.createElement('div');
+    controls.className = 'upoe-panel-controls';
+    controls.appendChild(this.leaguePicker());
+    controls.appendChild(this.statusPicker());
+    body.appendChild(controls);
+
+    const level = this.numberRow(body, 'Minimum level', gem.level, 0, gem.maxLevel || 21);
+    const quality = this.numberRow(body, 'Minimum quality', gem.quality, 0, 23);
+    const corrupted = this.gemCorruptedPicker(body, gem.corrupted);
+
+    const actions = document.createElement('div');
+    actions.className = 'upoe-panel-actions';
+
+    const search = document.createElement('button');
+    search.type = 'button';
+    search.className = 'upoe-primary';
+    search.textContent = 'Search on Trade';
+    search.addEventListener('click', () => {
+      const payload = TradeSearch.buildQuery({
+        target: { type: gem.name },
+        gem: {
+          level: level.read(),
+          quality: quality.read(),
+          corrupted: corrupted.read()
+        },
+        minPercent: this.state.minPercent,
+        status: this.state.status
+      });
+
+      window.open(TradeSearch.buildUrl(this.state.league, payload), '_blank', 'noopener');
+      this.close();
+    });
+
+    actions.appendChild(search);
+    body.appendChild(actions);
+
+    document.body.appendChild(panel);
+    this.state.node = panel;
+  },
+
+  // A labelled number box that can be cleared to drop the filter entirely
+  numberRow(parent, name, value, min, max) {
+    const wrapper = this.section(parent, name);
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'upoe-mod-min upoe-gem-number';
+    input.min = String(min);
+    input.max = String(max);
+    input.placeholder = 'any';
+    if (value !== null && value !== undefined) input.value = String(value);
+
+    wrapper.appendChild(input);
+
+    return {
+      read() {
+        if (input.value === '') return null;
+        const parsed = Number(input.value);
+        return Number.isNaN(parsed) ? null : parsed;
+      }
+    };
+  },
+
+  gemCorruptedPicker(parent, corrupted) {
+    const wrapper = this.section(parent, 'Corrupted');
+    const { label, select } = this.labelledSelect('');
+
+    const choices = [
+      { value: 'any', text: 'Either' },
+      { value: 'false', text: 'Not corrupted' },
+      { value: 'true', text: 'Corrupted' }
+    ];
+
+    // The build says what it uses, so that is the sensible starting point
+    const initial = corrupted === true ? 'true' : (corrupted === false ? 'false' : 'any');
+
+    for (const choice of choices) {
+      const option = document.createElement('option');
+      option.value = choice.value;
+      option.textContent = choice.text;
+      if (choice.value === initial) option.selected = true;
+      select.appendChild(option);
+    }
+
+    wrapper.appendChild(label);
+
+    return {
+      read() {
+        if (select.value === 'true') return true;
+        if (select.value === 'false') return false;
+        return undefined;
+      }
+    };
+  },
+
+  async openGem(gem) {
+    this.message('Loading trade data...');
+
+    try {
+      if (this.state.leagues.length === 0) {
+        this.state.leagues = await TradeSearch.getLeagues();
+      }
+      if (!this.state.league) {
+        this.state.league = this.state.leagues[0] || 'Standard';
+      }
+    } catch (error) {
+      console.error('UPOE Trade Manager: could not load trade data', error);
+      this.message('Could not reach the trade API. Try again in a moment.');
+      return;
+    }
+
+    this.renderGem(gem);
+  },
+
   render(index, candidates, selected, options) {
     const item = candidates[selected];
     const plan = TradeSearch.describeItem(index, item, { slot: options.slot });

@@ -634,10 +634,28 @@ const TradeSearch = {
       };
     }
 
+    // Several things land in misc_filters, so it is merged rather than assigned
+    const misc = {};
+
     if (options.corrupted === true || options.corrupted === false) {
-      filterGroups.misc_filters = {
-        filters: { corrupted: { option: String(options.corrupted) } }
-      };
+      misc.corrupted = { option: String(options.corrupted) };
+    }
+
+    const gem = options.gem;
+    if (gem) {
+      if (gem.level !== null && gem.level !== undefined) {
+        misc.gem_level = { min: gem.level };
+      }
+      if (gem.quality !== null && gem.quality !== undefined) {
+        misc.quality = { min: gem.quality };
+      }
+      if (gem.corrupted === true || gem.corrupted === false) {
+        misc.corrupted = { option: String(gem.corrupted) };
+      }
+    }
+
+    if (Object.keys(misc).length > 0) {
+      filterGroups.misc_filters = { filters: misc };
     }
 
     const sockets = options.sockets;

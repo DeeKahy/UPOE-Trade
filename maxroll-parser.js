@@ -286,6 +286,79 @@ const MaxrollParser = {
     };
   },
 
+  // Planner gem ids are not trade site gem names, so the table carries the
+  // bridge. Indexed by lowered name because a guide mentions a gem by its
+  // printed name rather than its id.
+  gemsByName() {
+    if (this._gemsByName) return this._gemsByName;
+
+    // Alternate quality variants share a display name with the base gem,
+    // WinterOrb alongside WinterOrbAltX and WinterOrbAltY, so the base id has
+    // to win or the build's own gem setup never matches
+    const index = {};
+    for (const [id, entry] of Object.entries(this.data.gems || {})) {
+      const key = entry[0].toLowerCase();
+      const isAlt = /Alt[A-Z]$/.test(id);
+      if (index[key] && (isAlt || !index[key].alt)) continue;
+      index[key] = { id: id, name: entry[0], maxLevel: entry[1], alt: isAlt };
+    }
+
+    this._gemsByName = index;
+    return index;
+  },
+
+  gemByName(name) {
+    if (!name) return null;
+    const found = this.gemsByName()[name.trim().toLowerCase()];
+    if (found) return found;
+
+    // Guides drop the "Support" suffix the trade site keeps
+    return this.gemsByName()[`${name.trim().toLowerCase()} support`] || null;
+  },
+
+  // What the build actually runs, so the panel opens on the level and quality
+  // the guide is asking for rather than a blank search
+  gemSetupsIn(body) {
+    const setups = {};
+
+    for (const profile of body.profiles || []) {
+      const skills = profile.skills || {};
+      for (const step of skills.steps || []) {
+        for (const group of step.skills || []) {
+          for (const gem of group.gems || []) {
+            if (!gem.id) continue;
+
+            // The same gem appears in every profile, at level 1 in Campaign and
+            // 20 by Aspirational. The endgame setup is the one worth searching,
+            // and the panel lets it be lowered.
+            const current = setups[gem.id];
+            const level = gem.level || null;
+            const quality = gem.quality || null;
+
+            if (!current) {
+              setups[gem.id] = {
+                level: level,
+                quality: quality,
+                corrupted: gem.corrupted === true
+              };
+              continue;
+            }
+
+            if (level !== null && (current.level === null || level > current.level)) {
+              current.level = level;
+              current.corrupted = gem.corrupted === true;
+            }
+            if (quality !== null && (current.quality === null || quality > current.quality)) {
+              current.quality = quality;
+            }
+          }
+        }
+      }
+    }
+
+    return setups;
+  },
+
   // The planner payload keeps its real content as a JSON string under "data"
   parseProfile(payload) {
     const body = typeof payload.data === 'string' ? JSON.parse(payload.data) : payload.data;
@@ -293,6 +366,7 @@ const MaxrollParser = {
 
     return {
       items: body.items || {},
+      gemSetups: this.gemSetupsIn(body),
       profiles: body.profiles.map(profile => {
         const equipment = profile.equipment || {};
         const variants = equipment.variants || [];

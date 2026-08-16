@@ -118,12 +118,20 @@
     state.chip = chip;
   }
 
-  // Gem and skill mentions share the markup but are keyed by a hash, and an
-  // item id always opens on a capital
-  function isItemMention(node) {
-    if (!node || !node.classList || !node.classList.contains('poe-item')) return false;
+  // Items and gems share the markup. Items are keyed by an id opening on a
+  // capital, gems by a hash, so gems are recognised by their printed name
+  // instead. Either way the mention only earns a button if it resolves.
+  function mentionKind(node) {
+    if (!node || !node.classList || !node.classList.contains('poe-item')) return null;
+
     const id = node.getAttribute('data-poe-id');
-    return Boolean(id) && /^[A-Z]/.test(id);
+    if (!id) return null;
+    if (/^[A-Z]/.test(id)) return 'item';
+
+    // The gem table is only loaded once a build has been fetched, so before
+    // that every hash is treated as a candidate and checked on click
+    if (!state.build) return 'gem';
+    return MaxrollParser.gemByName((node.textContent || '').trim()) ? 'gem' : null;
   }
 
   function onMouseOver(event) {
@@ -131,7 +139,7 @@
 
     const node = event.target.closest ? event.target.closest('span.poe-item') : null;
 
-    if (!isItemMention(node)) {
+    if (!mentionKind(node)) {
       if (state.chip && !state.chip.contains(event.target)) scheduleHideChip();
       return;
     }
@@ -176,6 +184,26 @@
     };
   }
 
+  // A gem mention opens on the level and quality the build actually runs,
+  // which is the search the reader wants far more often than a blank one
+  function openGem(node) {
+    const gem = MaxrollParser.gemByName((node.textContent || '').trim());
+    if (!gem) return false;
+
+    const setup = (state.build.gemSetups || {})[gem.id] || {};
+
+    TradePanel.openGem({
+      name: gem.name,
+      maxLevel: gem.maxLevel,
+      support: / Support$/.test(gem.name),
+      level: setup.level || null,
+      quality: setup.quality || null,
+      corrupted: setup.corrupted
+    });
+
+    return true;
+  }
+
   async function openFor(node) {
     hideChipNow();
     TradePanel.message('Loading build data...');
@@ -185,6 +213,12 @@
     } catch (error) {
       console.error('UPOE Trade Manager: could not load the maxroll planner', error);
       TradePanel.message('Could not load the build data from maxroll.');
+      return;
+    }
+
+    if (mentionKind(node) === 'gem') {
+      if (openGem(node)) return;
+      TradePanel.message('No gem data for that mention.');
       return;
     }
 

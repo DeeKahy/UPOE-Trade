@@ -110,9 +110,19 @@ def main():
         return [(e or {}).get(field) if isinstance(e, dict) else None
                 for e in src.get(key, [])]
 
+    # Planner gem ids are not the trade site's gem names, and the only reliable
+    # bridge is the gem's own base_item entry
+    gems = {}
+    for gem_id, gem in src.get('gems', {}).items():
+        base = gem.get('base_item') or {}
+        name = base.get('display_name')
+        if name:
+            gems[gem_id] = [name, base.get('max_level') or 20]
+
     payload = {
         'stats': build_stats(src, allowed),
         'bases': build_bases(src),
+        'gems': gems,
         'indexable': {
             'skill': names('indexable_skill_gems', 'name1'),
             'support': names('indexable_support_gems', 'name'),
